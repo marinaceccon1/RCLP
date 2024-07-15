@@ -48,6 +48,8 @@ To run our code, the download of the NIH and CXP datasets is necessary. The data
 
 The folder "models" is empty; however, when running the script of each method, the models resulting from training on each task are saved in this folder in the form 'models/{method}_{taskID}.pth'.
 
+The folder "indices" is empty as well; when a model is trained using a specific method, the indices of the training, validation and test set are saved in this folder as {train/val/test}_{nih/cxp}_{method}.txt, so that the training on that exact seed can be repeated.
+
 In the src folder, a script for each method is present.
 
 To execute each script it's sufficient to run "python {method}.py", where {method} needs to be replaced with the name of the strategy that one wants to use.
