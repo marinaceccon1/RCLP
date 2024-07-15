@@ -24,7 +24,6 @@ from src.data.utils import create_dataloaders
 from sklearn.metrics import roc_auc_score
 from src.data.utils import MergedDataset
 from src.data.utils import filter_target
-from src.data.utils import modify_dataset_labels
 from src.training.utils import train_model_pseudolabel
 from src.eval.utils import compute_auc_and_f1
 from src.eval.utils import eval_model
