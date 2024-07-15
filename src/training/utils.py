@@ -8,6 +8,34 @@ from sklearn.metrics import roc_auc_score
 import os
 import numpy as np
 
+class DenseNet121Block12Extractor(nn.Module):
+    def __init__(self, original_model):
+        super(DenseNet121Block12Extractor, self).__init__()
+        # Sequential up to Dense Block 3 (inclusive)
+        self.features1 = nn.Sequential(*list(original_model.features.children())[:8])
+        # Extract Dense Block 3
+        dense_block3 = list(original_model.features.children())[8]
+        # Extract the first 12 layers within Dense Block 3
+        self.features2 = nn.Sequential(*list(dense_block3.children())[:12])
+        # Add the remaining layers after the 12th layer in Dense Block 3 up to normalization
+        self.features3 = nn.Sequential(*list(dense_block3.children())[12:], original_model.features.norm5)
+
+    def forward(self, x):
+        x = self.features1(x)
+        prev_features = [x]
+        for i, layer in enumerate(self.features2):
+            new_features = layer(prev_features)
+            prev_features.append(new_features)
+            x = torch.cat(prev_features, 1)  # Concatenate along the channel dimension
+        return x
+
+def extract_features(feature_extractor, images):
+    features = []
+    with torch.no_grad():
+        outputs = feature_extractor(images)
+        features.append(outputs)
+    return torch.cat(features, dim=0)
+
 def train_model_joint(train_dataloader_joint, device, model, path_list_train, optimizer, criterion, reference_vectors, epoch):
     start_time = time.time()
     running_loss = 0.0
