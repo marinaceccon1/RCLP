@@ -1,12 +1,12 @@
 
 
-# Pseudo-Label Replay for the NIC scenario in the Medical Domain
+# Replay Consolidation with Label Propagation (RCLP) for the NIC scenario in the Medical Domain
 <div align="center">
 <img src="imgs/ScenarioCL_Medical_2.png" width="700">
 <div align="left">
   
 * **NIC Scenario**: Implementation of the New Instances and New Classes (NIC) scenario for the medical domain.
-* **Pseudo-Label Replay**: Implementation of a new Continual Learning (CL) method that minimizes forgetting.
+* **Replay Consolidation with Label Propagation (RCLP)**: Implementation of a new Continual Learning (CL) method that minimizes forgetting.
 ****
 
 # Introduction
@@ -27,7 +27,7 @@ Moreover, we propose and implement a new method to overcome the limitations of t
 <div align="center">
 <img src="imgs/Data_v3.png" width="700">
 <div align="left">
-Our approach, called Pseudo-Label Replay, ties together the Pseudo-Label and Replay methods, in a smart way such that the knowledge acquired by the model is gradually added to the samples saved in the memory buffer.
+Our approach, called Replay Consolidation with Label Propagation (RCLP), ties together the Pseudo-Label and Replay methods, in a smart way such that the knowledge acquired by the model is gradually added to the samples saved in the memory buffer.
 
 For more details, please refer to our [paper](#citation)
 
@@ -36,7 +36,7 @@ For more details, please refer to our [paper](#citation)
 <img src="imgs/F1.png" width="400">
 <div align="left">
 
-We benchmarked the traditional CL methods and our novel method Pseudo-Label Replay on a NIC scenario in the medical domain.
+We benchmarked the traditional CL methods and our novel method RCLP on a NIC scenario in the medical domain.
 We found that our approach outperforms existing methods in terms of forgetting and final F1 score.
 
 ## Training execution
