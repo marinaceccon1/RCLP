@@ -36,6 +36,73 @@ def extract_features(feature_extractor, images):
         features.append(outputs)
     return torch.cat(features, dim=0)
 
+def train_model_DER(train_dataloaders, device, model, optimizer, criterion, tasks_labels, epoch, p, 
+                    tasks_labels_nih, tasks_labels_cxp, new_replayed_datasets, old_targets):
+   num_epochs = 10
+
+    running_loss = 0.0
+    start_time = time.time()
+
+    task_labels = []
+    for sublist in tasks_labels[:i+1]:
+        task_labels.extend(set(sublist))
+
+    task_labels = list(set(task_labels))
+
+    for epoch in range(num_epochs):
+        #for each batch from the dataloader
+        model.train()
+        for m,data in enumerate(train_dataloaders[i]):
+            #extract the batch sample
+            img = data[0].to(device)
+            target_batch = data[1].to(device)
+            modified_target_batch = torch.zeros_like(target_batch).to(device)  # Ensure this tensor is on GPU
+            for k in tasks_labels[i]:
+                modified_target_batch[:, k] = target_batch[:, k]
+
+            if i > 0:
+                batch_size = 48
+                if i in tasks_labels_nih:
+                    batch_size = 32
+                replayed_dataset = new_replayed_datasets[i - 1]
+                replayed_indices = random.sample(range(len(replayed_dataset)), batch_size)
+                replayed_target_indices = [replayed_dataset[idx][2] for idx in replayed_indices]
+                replayed_targets = []
+                for index in replayed_target_indices:
+                    replayed_targets.append(old_targets[index])
+
+                replayed_imgs = [replayed_dataset[idx][0] for idx in replayed_indices]
+
+                replayed_target_batch = torch.stack(replayed_targets).to(device)
+                replayed_img_batch = torch.stack(replayed_imgs).to(device)
+
+                new_img = torch.cat([img, replayed_img_batch], dim=0).to(device)
+                new_target_batch = torch.cat([modified_target_batch, replayed_target_batch], dim=0).to(device)
+            else:
+                new_img = img
+                new_target_batch = modified_target_batch
+
+            #Forward
+            output_batch = model(new_img).to(device)
+            new_target = filter_target(new_target_batch, task_labels, device)
+            new_output = filter_target(output_batch, task_labels, device)
+            #calculate the loss
+            loss = criterion(new_output, new_target)
+            # Zero the parameter gradients
+            optimizer.zero_grad()
+            #backward
+            loss.backward()
+            #optimize
+            optimizer.step()
+
+            #update the loss
+            running_loss += loss.item()
+            if m % 100 == 99:    # Print every 100 batches
+                elapsed_time = time.time() - start_time
+                print('[%d, %5d] loss: %.3f | time: %.2fs' % (epoch + 1, m + 1, running_loss / 100, elapsed_time))
+                running_loss = 0.0
+                start_time = time.time()
+
 def train_model_joint(train_dataloader_joint, device, model, path_list_train, optimizer, criterion, reference_vectors, epoch):
     start_time = time.time()
     running_loss = 0.0
