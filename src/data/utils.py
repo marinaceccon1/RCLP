@@ -285,8 +285,26 @@ def create_datasets_joint_nih(train_indices_tasks, val_indices_tasks, test_indic
     
     return train_dataset_joint_nih, val_dataset_joint_nih, test_dataset_joint_nih
 
+def modify_dataset_labels(dataset, task_labels, batch_size=32, num_workers=12, pin_memory=True):
+    modified_dataset = []
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False,
+                            num_workers=num_workers, pin_memory=pin_memory)
+
+    for batch in dataloader:
+        imgs, labels, paths = batch
+        for img, label, path in zip(imgs, labels, paths):
+            new_label = torch.zeros_like(label)
+            for i in task_labels:
+                new_label[i] = label[i]
+            modified_dataset.append((img, new_label, path))
+    return modified_dataset
+
 def create_buffer(train_datasets):
     #Total size of the replay buffer (3% of the total size of the training stream)
+    for i in range(len(tasks_labels)):
+        modified_train_dataset = modify_dataset_labels(train_datasets[i], tasks_labels[i])
+    train_datasets[i] = modified_train_dataset
+    
     total_length = sum(len(train_dataset) for train_dataset in train_datasets)
     subset_size = int(total_length * 3 / 100)
 
