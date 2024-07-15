@@ -1,18 +1,12 @@
 
 
 # Replay Consolidation with Label Propagation (RCLP) for the NIC scenario in the Medical Domain
-<div align="center">
-<img src="imgs/ScenarioCL_Medical_2.png" width="700">
-<div align="left">
   
 * **NIC Scenario**: Implementation of the New Instances and New Classes (NIC) scenario for the medical domain.
 * **Replay Consolidation with Label Propagation (RCLP)**: Implementation of a new Continual Learning (CL) method that minimizes forgetting.
 ****
 
 # Introduction
-<div align="center">
-<img src="imgs/taskDiseasePrevalence.png" width="700">
-<div align="left">
 We implement the NIC scenario in the medical domain considering the problem of pathology classification of Chest X-ray images.
 In particular, we consider a scenario of 7 tasks, for a total of 19 pathologies, such that between two successive tasks either a domain shift occurs or new classes are introduced. The scenario is implemented using the CheXpert (CXP) and ChestXray14 (NIH) datasets.
 
@@ -36,9 +30,6 @@ The advantages of our approach, called Replay Consolidation with Label Propagati
 For more details, please refer to our [paper](#citation)
 
 ## Results
-<div align="center">
-<img src="imgs/F1.png" width="400">
-<div align="left">
 
 We benchmarked the traditional CL methods and our novel method RCLP on a NIC scenario in the medical domain.
 We found that our approach outperforms existing methods in terms of forgetting and final F1 score.
