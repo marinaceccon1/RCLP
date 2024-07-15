@@ -18,16 +18,20 @@ In particular, we consider a scenario of 7 tasks, for a total of 19 pathologies,
 
 To each task are associated all and only the samples in which at least one of the relative pathologies appears. 
 
-The plots represented above represent the prevalence of each disease in each task. The red line is associated to the prevalence of the pathologies in the original dataset. The blue bars represent the occurrence of the pathologies associated to the relative task, while the gray lines represent the prevalence of the other - hidden - pathologies. As highlighted by the figure, there is some intersection between tasks, hence some samples are in common.
+The plots represented above show the prevalence of each disease in each task. The dark blue line is associated to the prevalence of the pathologies in the original dataset. The dark blue bars represent the occurrence of the pathologies associated to the relative task, while the light blue lines represent the prevalence of the other - hidden - pathologies. As highlighted by the figure, there is some intersection between tasks, hence some samples are in common.
 
 Moreover, we propose and implement a new method to overcome the limitations of traditional CL strategies in this scenario:
 - Replay-based methods perform poorly due to the interference between replayed samples and new samples.
 - Distillation-based methods require the re-appearance of old labels in new images.
 
 <div align="center">
-<img src="imgs/Data_v3.png" width="700">
+<img src="imgs/TrainingFramework.png" width="700">
 <div align="left">
-Our approach, called Replay Consolidation with Label Propagation (RCLP), ties together the Pseudo-Label and Replay methods, in a smart way such that the knowledge acquired by the model is gradually added to the samples saved in the memory buffer.
+
+<div align="center">
+<img src="imgs/ReplayMemoryConsolidationWithLabelPropagation.png" width="700">
+<div align="left">
+The advantages of our approach, called Replay Consolidation with Label Propagation, are threefold: (1) the integration of old knowledge on the new task samples and of new knowledge on the replay buffer samples, together with a Masking Loss, mitigate the issue of task interference of Replay; (2) the Replay memory is optimized since the targets provide information not only on the labels from their originating tasks but also from all preceding tasks up to the current one; (3) by replaying samples that contain old classes, the limitations of distillation are overcome.
 
 For more details, please refer to our [paper](#citation)
 
@@ -42,11 +46,7 @@ We found that our approach outperforms existing methods in terms of forgetting a
 ## Training execution
 To run our code, the download of the NIH and CXP datasets is necessary. The datasets can be downloaded respectively from https://stanfordmlgroup.github.io/competitions/chexpert/ and https://paperswithcode.com/dataset/chestx-ray14.
 
-In the folder datasets_indices, one can find the .txt files from which the indices of the images belonging to the train, validation and test set are read by the scripts, both for the CXP and NIH dataset.
-
-Moreover, the files train_indices_tasks.txt, val_indices_tasks.txt, test_indices_tasks.txt in this folder contain the indices of the images belonging to each task. The code to execute the division in tasks in available in the script create_scenario.py in the "src" folder. If one wants to modify the task stream, it's sufficient to modify this code. 
-
-The folder "models" is empty; however, when running the script of each method, the models resulting from training on each task are saved in this folder in the form 'models/model_{method}_{taskID}_{epoch}.pth'.
+The folder "models" is empty; however, when running the script of each method, the models resulting from training on each task are saved in this folder in the form 'models/{method}_{taskID}.pth'.
 
 In the src folder, a script for each method is present.
 
