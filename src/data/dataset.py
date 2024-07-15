@@ -8,15 +8,15 @@ import cv2
 import imageio
 
 
+
 class NIH(Dataset):
-    def __init__(self, dataframe, path_image, finding="any", transform=None, return_gender=False):
+    def __init__(self, dataframe, path_image, finding="any", transform=None):
         self.dataframe = dataframe
         # Total number of datapoints
         self.dataset_size = self.dataframe.shape[0]
         self.finding = finding
         self.transform = transform
         self.path_image = path_image
-        self.return_gender = return_gender
 
         if not finding == "any":  # can filter for positive findings of the kind described; useful for evaluation
             if finding in self.dataframe.columns:
@@ -41,7 +41,6 @@ class NIH(Dataset):
          'Pleural_Thickening',
          'Pneumonia',
          'Pneumothorax']
-        
 
     def __getitem__(self, idx):
         item = self.dataframe.iloc[idx]
@@ -89,7 +88,7 @@ class NIH(Dataset):
 #                     label[i] = self.dataframe[self.PRED_LABEL[i].strip()].iloc[idx].astype('float')
 #-------------------------------------------------------------------------
             
-        return (img, new_label, item["Image Index"]) if not self.return_gender else (img, new_label, item["Image Index"], int(item["Patient Gender"] == "F"))
+        return img, new_label, item["Image Index"]
 
     def __len__(self):
         return self.dataset_size
