@@ -43,18 +43,6 @@ train_df_nih = d_nih_aug_csv[d_nih_aug_csv.index.isin(train_indices_list_nih)].r
 val_df_nih = d_nih_aug_csv[d_nih_aug_csv["index"].isin(val_indices_list_nih)].reset_index(drop=True)
 test_df_nih = d_nih_aug_csv[d_nih_aug_csv["index"].isin(test_indices_list_nih)].reset_index(drop=True)
 
-def save_indices_to_txt(indices, file_path):
-    with open(file_path, 'w') as file:
-        for index in indices:
-            file.write(f"{index}\n")
-
-train_indices_file_nih = os.path.join(base_path, '/indices/train_nih_DER.txt')
-val_indices_file_nih = os.path.join(base_path, '/indices/val_nih_DER.txt')
-test_indices_file_nih = os.path.join(base_path, '/indices/test_nih_DER.txt')
-
-save_indices_to_txt(train_indices_list_nih, train_indices_file_nih)
-save_indices_to_txt(val_indices_list_nih, val_indices_file_nih)
-save_indices_to_txt(test_indices_list_nih, test_indices_file_nih)
 #define the paths where the train and validation csv files can be found
 cxp_csv_train_file = os.path.join(base_path,"dataset/chexpertchestxrays-u20210408/train.csv")
 cxp_csv_val_file = os.path.join(base_path,"dataset/chexpertchestxrays-u20210408/valid.csv")
@@ -101,11 +89,6 @@ cxp_train_df.rename(columns={'Pleural Effusion': 'Effusion'}, inplace=True)
 
 # Concatenate vertically
 cxp_df = pd.concat([cxp_train_df, cxp_val_df], axis=0).reset_index(drop = True)
-
-#Read the train, validation and test indices from the corresponding txt files
-train_patient_indices_cxp = read_indices_from_txt(os.path.join(base_path,'datasets_indices/train_indices_cxp.txt'))
-val_patient_indices_cxp = read_indices_from_txt(os.path.join(base_path,'datasets_indices/val_indices_cxp.txt'))
-test_patient_indices_cxp = read_indices_from_txt(os.path.join(base_path,'datasets_indices/test_indices_cxp.txt'))
 
 train_df_cxp = cxp_df[cxp_df.index.isin(train_patient_indices_cxp)].reset_index(drop=True)
 val_df_cxp = cxp_df[cxp_df.index.isin(val_patient_indices_cxp)].reset_index(drop=True)
