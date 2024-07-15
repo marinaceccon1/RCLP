@@ -245,20 +245,8 @@ for i in range(len(train_dataloaders)):
         old_model.eval()
         
         #train the model for one epoch
-        train_model_rclp(train_dataloaders, tasks_labels, i, model, old_model, device, criterion, optimizer, epoch,
-                        replayed_datasets, tasks_labels_nih, best_thresholds)
-        
-        model.eval()
-        #compute and print the validation loss
-        val_loss = eval_model(val_dataloaders, i, device, model, criterion, tasks_labels)
-
-    #save the model in memory
-    torch.save(model.state_dict(), os.path.join(base_path,'/models/model_pseudolabels_replay_task{0}_epoch{1}.pth'.format(i,10)))
-
-    #update the replay buffers adding the new pseudolabels
-    update_replay_buffers(subset_size, i, train_datasets, test_datasets, test_dataloaders, val_datasets, 
-                          val_dataloaders, tasks_labels, replayed_datasets, best_thresholds, base_path, 
-                          num_classes, device, old_model, model)
+        train_model_rclp(train_dataloaders, tasks_labels, i, model, old_model, device, criterion, optimizer, epoch, replayed_datasets, tasks_labels_nih, best_thresholds, val_dataloaders,
+                    subset_size, train_datasets, val_datasets, val_dataloaders, tasks_labels, base_path,  num_classes)
 
 model.eval()
 
