@@ -215,6 +215,7 @@ criterion = torch.nn.BCELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.0005)
 
 model.to(device)
+old_targets = {}
 
 for p in range(len(train_dataloaders)):
     num_epochs = 10
@@ -224,7 +225,7 @@ for p in range(len(train_dataloaders)):
         model.train()
         #train the model for one epoch
         train_model_DER(train_dataloaders, device, model, optimizer, criterion, tasks_labels, epoch, p, 
-                           tasks_labels_nih, tasks_labels_cxp, new_replayed_datasets)
+                           tasks_labels_nih, tasks_labels_cxp, new_replayed_datasets, old_targets)
 
         #compute the validation loss
         model.eval()
@@ -233,6 +234,16 @@ for p in range(len(train_dataloaders)):
         optimizer.param_groups[0]['lr'] = 0.0005
     #save the model in memory
     torch.save(model.state_dict(), os.path.join(base_path,'models/model_DER_task{0}_epoch{1}.pth'.format(p,10)))
+    with torch.no_grad():
+      if i < len(new_replayed_datasets):
+          replay_dataloader = DataLoader(new_replayed_datasets[i], batch_size=32, shuffle=True, num_workers=12, pin_memory=True) 
+          for m,data in enumerate(replay_dataloader):
+              img = data[0].to(device)
+              idx_batch = data[2]
+              output_batch = model(img).to(device)
+              for j in range(len(idx_batch)):
+                  if idx_batch[j] not in old_targets.keys():
+                    old_targets[idx_batch[j]] = output_batch[j]
 
 num_classes = 19
 
