@@ -46,15 +46,13 @@ We found that our approach outperforms existing methods in terms of forgetting a
 ## Training execution
 To run our code, the download of the NIH and CXP datasets is necessary. The datasets can be downloaded respectively from https://stanfordmlgroup.github.io/competitions/chexpert/ and https://paperswithcode.com/dataset/chestx-ray14.
 
-The folder "models" is empty; however, when running the script of each method, the models resulting from training on each task are saved in this folder in the form 'models/{method}_{taskID}.pth'.
+The folder "models" is empty; however, when running the script of each method, the models resulting from training on each task are saved in this folder in the form 'models/{method}_{taskID}_{epoch}.pth'.
 
-The folder "indices" is empty as well; when a model is trained using a specific method, the indices of the training, validation and test set are saved in this folder as {train/val/test}_{nih/cxp}_{method}.txt, so that the training on that exact seed can be repeated.
+The folder "indices" is empty as well. After running the code, it will contain .txt files with the sample indices relative to each task.
 
-In the src folder, a script for each method is present.
+In the src folder, a script for each method is present. To execute each method, the first thing that needs to be done is run "python Create_scenarios.py". This code creates the division of the NIH and CXP datasets in tasks and saves the indices of the samples in each task in .txt files in the folder "indices". At this point, any method can be executed by running "python {method}.py". The code reads the indices from the corresponding .txt file and creates the task stream, then computes the corresponding strategy.
 
-To execute each script it's sufficient to run "python {method}.py", where {method} needs to be replaced with the name of the strategy that one wants to use.
-
-The scripts execute the training of the model using the corresponding strategy. During the training, the training loss is printed every 100 mini-batches and the validation loss is printed after each epoch. The evaluation of the resulting models is then computed on all the test sets relative to the old tasks and the current one, and the corresponding values of AUC and F1 score are printed.
+During the training, the training loss is printed every 100 mini-batches and the validation loss is printed after each epoch. The evaluation of the resulting models is then computed on all the test sets relative to the old tasks and the current one, and the corresponding values of AUC and F1 score are printed.
 
 The folders data, training, and eval contain scripts in which auxiliary functions, needed for training using each strategy, are defined.
 
