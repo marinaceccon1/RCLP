@@ -1,6 +1,8 @@
-
-
 # Replay Consolidation with Label Propagation (RCLP) for the NIC scenario in the Medical Domain
+
+<div align="center">
+<img src="imgs/ScenarioCL_Medical_2.png" width="700">
+<div align="left">
   
 * **NIC Scenario**: Implementation of the New Instances and New Classes (NIC) scenario for the medical domain.
 * **Replay Consolidation with Label Propagation (RCLP)**: Implementation of a new Continual Learning (CL) method that minimizes forgetting.
