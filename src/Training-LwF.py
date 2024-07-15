@@ -28,7 +28,6 @@ from src.eval.utils import eval_model
 from sklearn.metrics import roc_auc_score
 from src.data.utils import MergedDataset
 from src.data.utils import filter_target
-from src.data.utils import modify_dataset_labels
 from src.eval.utils import compute_auc_and_f1
 from src.training.utils import compute_old_targets_replay
 import time
