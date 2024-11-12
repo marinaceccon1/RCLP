@@ -15,7 +15,7 @@
 We implement the NIC scenario in the medical domain considering the problem of pathology classification of Chest X-ray images.
 In particular, we consider a scenario of 7 tasks, for a total of 19 pathologies, such that between two successive tasks either a domain shift occurs or new classes are introduced. The scenario is implemented using the CheXpert (CXP) and ChestXray14 (NIH) datasets.
 
-To each task are associated all and only the samples in which at least one of the relative pathologies appears. 
+Each task is associated with all and only the samples in which at least one of the relative pathologies appears. 
 
 The plots represented above show the prevalence of each disease in each task. The dark blue line is associated to the prevalence of the pathologies in the original dataset. The dark blue bars represent the occurrence of the pathologies associated to the relative task, while the light blue lines represent the prevalence of the other - hidden - pathologies. As highlighted by the figure, there is some intersection between tasks, hence some samples are in common.
 
@@ -32,7 +32,7 @@ Moreover, we propose and implement a new method to overcome the limitations of t
 <div align="left">
 The advantages of our approach, called Replay Consolidation with Label Propagation, are threefold: (1) the integration of old knowledge on the new task samples and of new knowledge on the replay buffer samples, together with a Masking Loss, mitigate the issue of task interference of Replay; (2) the Replay memory is optimized since the targets provide information not only on the labels from their originating tasks but also from all preceding tasks up to the current one; (3) by replaying samples that contain old classes, the limitations of distillation are overcome.
 
-For more details, please refer to our [paper](#citation)
+For more details, please refer to our [paper](#https://arxiv.org/abs/2404.06859)
 
 ## Results
 <div align="center">
@@ -62,10 +62,14 @@ The folders data, training, and eval contain scripts in which auxiliary function
 If you find this project useful in your research, please add a star and cite us 😊 
 
 ```BibTeX
-@misc{Multi-Label Continual Learning for the Medical Domain: A Novel Benchmark,
-    title={},
-    author={},
-    year={2024}
+@misc{ceccon2024multilabelcontinuallearningmedical,
+      title={Multi-Label Continual Learning for the Medical Domain: A Novel Benchmark}, 
+      author={Marina Ceccon and Davide Dalle Pezze and Alessandro Fabris and Gian Antonio Susto},
+      year={2024},
+      eprint={2404.06859},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2404.06859}, 
 }
 ```
 
