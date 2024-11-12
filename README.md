@@ -32,7 +32,7 @@ Moreover, we propose and implement a new method to overcome the limitations of t
 <div align="left">
 The advantages of our approach, called Replay Consolidation with Label Propagation, are threefold: (1) the integration of old knowledge on the new task samples and of new knowledge on the replay buffer samples, together with a Masking Loss, mitigate the issue of task interference of Replay; (2) the Replay memory is optimized since the targets provide information not only on the labels from their originating tasks but also from all preceding tasks up to the current one; (3) by replaying samples that contain old classes, the limitations of distillation are overcome.
 
-For more details, please refer to our [paper](#https://arxiv.org/abs/2404.06859)
+For more details, please refer to our [paper](#citation)
 
 ## Results
 <div align="center">
