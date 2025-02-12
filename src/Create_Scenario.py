@@ -5,8 +5,6 @@ current_path = os.path.abspath(__file__)
 base_path = os.path.dirname(os.path.dirname(current_path))
 sys.path.append(base_path)
 
-from sklearn.metrics import roc_auc_score
-import torch
 import numpy as np
 from src.data.utils import read_indices_from_txt
 from src.data.utils import prioritize_frontal
