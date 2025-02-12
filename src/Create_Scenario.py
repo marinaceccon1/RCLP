@@ -6,7 +6,7 @@ base_path = os.path.dirname(os.path.dirname(current_path))
 sys.path.append(base_path)
 
 import numpy as np
-from src.data.utils import read_indices_from_txt
+from src.data.utils import read_indices_from_txt, save_indices_to_txt
 from src.data.utils import prioritize_frontal
 import pandas as pd
 import random
