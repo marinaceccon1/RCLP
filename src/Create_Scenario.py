@@ -5,24 +5,11 @@ current_path = os.path.abspath(__file__)
 base_path = os.path.dirname(os.path.dirname(current_path))
 sys.path.append(base_path)
 
-
 from sklearn.metrics import roc_auc_score
 import torch
-import torchxrayvision as xrv
-import torch.nn as nn
-import torch.optim as optim
-from torchvision import transforms
 import numpy as np
-from torch.utils.data import Dataset, DataLoader, Subset
-import matplotlib.pyplot as plt
-from src.data.dataset import NIH
-from src.data.dataset import CheXpert
 from src.data.utils import read_indices_from_txt
 from src.data.utils import prioritize_frontal
-from sklearn.metrics import roc_auc_score
-import time
-import os
-from PIL import Image
 import pandas as pd
 import random
 
