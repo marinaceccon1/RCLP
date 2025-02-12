@@ -3,19 +3,16 @@
 
 import sys
 import os
-base_path = #insert the path where the repository was imported
+current_path = os.path.abspath(__file__)
+base_path = os.path.dirname(os.path.dirname(current_path))
 sys.path.append(base_path)
 
-from sklearn.metrics import roc_auc_score
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torchvision import transforms
-import numpy as np
-from torch.utils.data import Dataset, DataLoader, Subset
+from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
-from src.data.dataset import NIH
-from src.data.dataset import CheXpert
 from src.data.utils import import_nih_dfs
 from src.data.utils import import_cxp_dfs
 from src.data.utils import create_datasets
@@ -24,11 +21,8 @@ from src.data.utils import create_datasets_joint_nih
 from src.data.utils import create_dataloaders
 from src.training.utils import train_model_joint
 from src.eval.utils import eval_model_joint
-from sklearn.metrics import roc_auc_score
 from src.data.utils import MergedDataset
-from src.data.utils import filter_single_target
 from src.eval.utils import compute_auc_and_f1_joint
-import time
 
 #define the gpu device used to attach the tensors
 device = torch.device('cuda:2')
