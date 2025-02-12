@@ -6,7 +6,7 @@ base_path = os.path.dirname(os.path.dirname(current_path))
 sys.path.append(base_path)
 
 import numpy as np
-from src.data.utils import read_indices_from_txt, save_indices_to_txt
+from src.data.utils import save_indices_to_txt
 from src.data.utils import prioritize_frontal
 import pandas as pd
 import random
@@ -15,7 +15,7 @@ import random
 path_to_csv = os.path.join(base_path, "dataset/d_nih_aug.csv")
 d_nih_aug_csv = pd.read_csv(path_to_csv)
 
-#IF THE FILES "train_nih.txt", "val_nih.txt" and "test_nih.txt" HAVE ALREADY BEEN CREATED, IT'S NOT NEEDED TO COMPUTE THE LINES UP TO 139
+
 # create a list of indices for all patients in d_nih
 all_indices = list(range(np.max(d_nih_aug_csv["Patient ID"])))
 
@@ -122,15 +122,6 @@ save_indices_to_txt(train_indices_list_nih, train_indices_file_nih)
 save_indices_to_txt(val_indices_list_nih, val_indices_file_nih)
 save_indices_to_txt(test_indices_list_nih, test_indices_file_nih)
 
-#IF THE CODE ABOVE HAS ALREADY BEEN COMPUTED, START FROM HERE
-train_indices_file_nih = '/home/marina/NewContinual/indices/train_nih.txt'
-val_indices_file_nih = '/home/marina/NewContinual/indices/val_nih.txt'
-test_indices_file_nih = '/home/marina/NewContinual/indices/test_nih.txt'
-
-train_indices_list_nih = read_indices_from_txt(train_indices_file_nih)
-val_indices_list_nih = read_indices_from_txt(val_indices_file_nih)
-test_indices_list_nih = read_indices_from_txt(test_indices_file_nih)
-
 #define the dtaframes relative to the train, validation and test set
 train_df_nih = d_nih_aug_csv[d_nih_aug_csv.index.isin(train_indices_list_nih)].reset_index(drop=True)
 val_df_nih = d_nih_aug_csv[d_nih_aug_csv["index"].isin(val_indices_list_nih)].reset_index(drop=True)
@@ -218,19 +209,6 @@ test_indices_file_cxp = os.path.join(base_path, '/indices/test_cxp.txt')
 save_indices_to_txt(train_patient_indices_cxp, train_indices_file_cxp)
 save_indices_to_txt(val_patient_indices_cxp, val_indices_file_cxp)
 save_indices_to_txt(test_patient_indices_cxp, test_indices_file_cxp)
-
-#IF THE CODE ABOVE HAS ALREADY BEEN COMPUTED, START FROM HERE
-train_indices_file_cxp = os.path.join(base_path, '/indices/train_cxp.txt')
-val_indices_file_cxp = os.path.join(base_path, '/indices/val_cxp.txt')
-test_indices_file_cxp = os.path.join(base_path, '/indices/test_cxp.txt')
-
-train_patient_indices_cxp = read_indices_from_txt(train_indices_file_CXP)
-val_patient_indices_cxp = read_indices_from_txt(val_indices_file_cxp)
-test_patient_indices_cxp = read_indices_from_txt(test_indices_file_cxp)
-
-train_df_cxp = cxp_df[cxp_df.index.isin(train_patient_indices_cxp)].reset_index(drop=True)
-val_df_cxp = cxp_df[cxp_df.index.isin(val_patient_indices_cxp)].reset_index(drop=True)
-test_df_cxp = cxp_df[cxp_df.index.isin(test_patient_indices_cxp)].reset_index(drop=True)
 
 pathologies = ['Lung Opacity',
               'Atelectasis',
