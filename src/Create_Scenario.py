@@ -30,10 +30,117 @@ import random
 path_to_csv = os.path.join(base_path, "dataset/d_nih_aug.csv")
 d_nih_aug_csv = pd.read_csv(path_to_csv)
 
-#read the indices of the train, validation and test set from the files
-train_indices_file_nih = os.path.join(base_path, 'datasets_indices/train_indices_nih.txt')
-val_indices_file_nih = os.path.join(base_path, 'datasets_indices/val_indices_nih.txt')
-test_indices_file_nih = os.path.join(base_path, 'datasets_indices/test_indices_nih.txt')
+#IF THE FILES "train_nih.txt", "val_nih.txt" and "test_nih.txt" HAVE ALREADY BEEN CREATED, IT'S NOT NEEDED TO COMPUTE THE LINES UP TO 139
+# create a list of indices for all patients in d_nih
+all_indices = list(range(np.max(d_nih_aug_csv["Patient ID"])))
+
+# shuffle the list of indices
+random.shuffle(all_indices)
+
+# calculate the number of images in each dataset
+num_train = int(np.max(d_nih_aug_csv["Patient ID"]) * 0.8)
+num_val_test = np.max(d_nih_aug_csv["Patient ID"]) - num_train
+num_val = num_val_test // 2
+num_test = num_val_test - num_val
+
+# split the indices into three sets
+#"We use a 80-10-10 train-validation-test split with no patient shared across splits."
+train_patient_indices_nih = all_indices[:num_train]
+val_patient_indices_nih = all_indices[num_train:num_train+num_val]
+test_patient_indices_nih = all_indices[num_train+num_val:]
+
+# verify that the lengths add up correctly
+assert len(train_patient_indices_nih) == num_train
+assert len(val_patient_indices_nih) == num_val
+assert len(test_patient_indices_nih) == num_test
+assert len(train_patient_indices_nih) + len(val_patient_indices_nih) + len(test_patient_indices_nih) == np.max(d_nih_aug_csv["Patient ID"])
+
+#convert the lists into sets to verify that the sets have no element in common
+train_set_nih = set(train_patient_indices_nih)
+val_set_nih = set(val_patient_indices_nih)
+test_set_nih = set(test_patient_indices_nih)
+
+if len(train_set_nih.intersection(val_set_nih)) > 0:
+    print("train and val sets have common indices")
+if len(train_set_nih.intersection(test_set_nih)) > 0:
+    print("train and test sets have common indices")
+if len(val_set_nih.intersection(test_set_nih)) > 0:
+    print("val and test sets have common indices")
+
+#train_indices is the list of indices of images in the training set, it contains the indices of all images whose patient index
+#is in train_patient_indices
+train_indices_nih = {}
+#val_indices is the list of indices of images in the validation set it contains the indices of all images whose patient index
+#is in val_patient_indices
+val_indices_nih = {}
+#test_indices is the list of indices of images in the test set, it contains the indices of all images whose patient index
+#is in test_patient_indices
+test_indices_nih = {}
+
+for i in d_nih_aug_csv["Patient ID"]:
+    train_indices_nih[i] = []
+    val_indices_nih[i] = []
+    test_indices_nih[i] = []
+
+for i in range(len(d_nih_aug_csv)):
+    if d_nih_aug_csv["Patient ID"][i] in train_patient_indices_nih:
+        train_indices_nih[d_nih_aug_csv["Patient ID"][i]].append(i)
+    elif d_nih_aug_csv["Patient ID"][i] in val_patient_indices_nih:
+        val_indices_nih[d_nih_aug_csv["Patient ID"][i]].append(i)
+    elif d_nih_aug_csv["Patient ID"][i] in test_patient_indices_nih:
+        test_indices_nih[d_nih_aug_csv["Patient ID"][i]].append(i)
+
+for i in train_indices_nih.keys():
+    if (len(train_indices_nih[i])>1):
+        for idx in train_indices_nih[i]:
+            if d_nih_aug_csv["Finding Labels"][idx] == "No Finding":
+                train_indices_nih[i].remove(idx)
+
+for i in val_indices_nih.keys():
+    if (len(val_indices_nih[i])>1):
+        for idx in val_indices_nih[i]:
+            if d_nih_aug_csv["Finding Labels"][idx] == "No Finding":
+                val_indices_nih[i].remove(idx)
+
+for i in test_indices_nih.keys():
+    if (len(test_indices_nih[i])>1):
+        for idx in test_indices_nih[i]:
+            if d_nih_aug_csv["Finding Labels"][idx] == "No Finding":
+                test_indices_nih[i].remove(idx)
+
+train_indices_list_nih = []
+
+for i in train_indices_nih.keys():
+    if (len(train_indices_nih[i])>0):
+        random_number = random.randint(0, len(train_indices_nih[i])-1)
+        train_indices_list_nih.append(train_indices_nih[i][random_number])
+
+val_indices_list_nih = []
+
+for i in val_indices_nih.keys():
+    if (len(val_indices_nih[i])>0):
+        random_number = random.randint(0, len(val_indices_nih[i])-1)
+        val_indices_list_nih.append(val_indices_nih[i][random_number])
+
+test_indices_list_nih = []
+
+for i in test_indices_nih.keys():
+    if (len(test_indices_nih[i])>0):
+        random_number = random.randint(0, len(test_indices_nih[i])-1)
+        test_indices_list_nih.append(test_indices_nih[i][random_number])
+
+train_indices_file_nih = '/home/marina/NewContinual/indices/train_nih.txt'
+val_indices_file_nih = '/home/marina/NewContinual/indices/val_nih.txt'
+test_indices_file_nih = '/home/marina/NewContinual/indices/test_nih.txt'
+
+save_indices_to_txt(train_indices_list_nih, train_indices_file_nih)
+save_indices_to_txt(val_indices_list_nih, val_indices_file_nih)
+save_indices_to_txt(test_indices_list_nih, test_indices_file_nih)
+
+#IF THE CODE ABOVE HAS ALREADY BEEN COMPUTED, START FROM HERE
+train_indices_file_nih = '/home/marina/NewContinual/indices/train_nih.txt'
+val_indices_file_nih = '/home/marina/NewContinual/indices/val_nih.txt'
+test_indices_file_nih = '/home/marina/NewContinual/indices/test_nih.txt'
 
 train_indices_list_nih = read_indices_from_txt(train_indices_file_nih)
 val_indices_list_nih = read_indices_from_txt(val_indices_file_nih)
@@ -44,6 +151,7 @@ train_df_nih = d_nih_aug_csv[d_nih_aug_csv.index.isin(train_indices_list_nih)].r
 val_df_nih = d_nih_aug_csv[d_nih_aug_csv["index"].isin(val_indices_list_nih)].reset_index(drop=True)
 test_df_nih = d_nih_aug_csv[d_nih_aug_csv["index"].isin(test_indices_list_nih)].reset_index(drop=True)
 
+#IF "train_cxp.txt", "val_cxp.txt" and "test_cxp.txt" ALREADY EXIST, DON'T NEED TO RUN THIS CODE, CAN SKIP TO LINE 233
 #define the paths where the train and validation csv files can be found
 cxp_csv_train_file = os.path.join(base_path,"dataset/chexpertchestxrays-u20210408/train.csv")
 cxp_csv_val_file = os.path.join(base_path,"dataset/chexpertchestxrays-u20210408/valid.csv")
@@ -118,13 +226,26 @@ assert len(val_patient_indices_cxp) == num_val_cxp
 assert len(test_patient_indices_cxp) == num_test_cxp
 assert len(train_patient_indices_cxp) + len(val_patient_indices_cxp) + len(test_patient_indices_cxp) == len(cxp_df)
 
-train_indices_file_cxp = os.path.join(base_path, '/indices/train_cxp_DER.txt')
-val_indices_file_cxp = os.path.join(base_path, '/indices/val_cxp_DER.txt')
-test_indices_file_cxp = os.path.join(base_path, '/indices/test_cxp_DER.txt')
+train_indices_file_cxp = os.path.join(base_path, '/indices/train_cxp.txt')
+val_indices_file_cxp = os.path.join(base_path, '/indices/val_cxp.txt')
+test_indices_file_cxp = os.path.join(base_path, '/indices/test_cxp.txt')
 
 save_indices_to_txt(train_patient_indices_cxp, train_indices_file_cxp)
 save_indices_to_txt(val_patient_indices_cxp, val_indices_file_cxp)
 save_indices_to_txt(test_patient_indices_cxp, test_indices_file_cxp)
+
+#IF THE CODE ABOVE HAS ALREADY BEEN COMPUTED, START FROM HERE
+train_indices_file_cxp = os.path.join(base_path, '/indices/train_cxp.txt')
+val_indices_file_cxp = os.path.join(base_path, '/indices/val_cxp.txt')
+test_indices_file_cxp = os.path.join(base_path, '/indices/test_cxp.txt')
+
+train_patient_indices_cxp = read_indices_from_txt(train_indices_file_CXP)
+val_patient_indices_cxp = read_indices_from_txt(val_indices_file_cxp)
+test_patient_indices_cxp = read_indices_from_txt(test_indices_file_cxp)
+
+train_df_cxp = cxp_df[cxp_df.index.isin(train_patient_indices_cxp)].reset_index(drop=True)
+val_df_cxp = cxp_df[cxp_df.index.isin(val_patient_indices_cxp)].reset_index(drop=True)
+test_df_cxp = cxp_df[cxp_df.index.isin(test_patient_indices_cxp)].reset_index(drop=True)
 
 pathologies = ['Lung Opacity',
               'Atelectasis',
@@ -219,7 +340,7 @@ for i in range(len(test_df_nih)):
                     test_indices_tasks[k].append(i)
 
 # Define the file path
-file_path = os.path.join(base_path, "indices/NewScenario/train_indices_tasks.txt")
+file_path = os.path.join(base_path, "indices/train_indices_tasks.txt")
 
 # Open the file for writing
 with open(file_path, "w") as f:
@@ -229,7 +350,7 @@ with open(file_path, "w") as f:
         f.write(" ".join(map(str, sublist)) + "\n")
 
 # Define the file path
-file_path = os.path.join(base_path,"indices/NewScenario/val_indices_tasks.txt")
+file_path = os.path.join(base_path,"indices/val_indices_tasks.txt")
 
 # Open the file for writing
 with open(file_path, "w") as f:
@@ -239,7 +360,7 @@ with open(file_path, "w") as f:
         f.write(" ".join(map(str, sublist)) + "\n")
 
 # Define the file path
-file_path = os.path.join(base_path,"indices/NewScenario/test_indices_tasks.txt")
+file_path = os.path.join(base_path,"indices/test_indices_tasks.txt")
 
 # Open the file for writing
 with open(file_path, "w") as f:
