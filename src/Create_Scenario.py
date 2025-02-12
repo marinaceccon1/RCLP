@@ -1,6 +1,8 @@
 import sys
 import os
-base_path = #insert the path where the repository was imported
+
+current_path = os.path.abspath(__file__)
+base_path = os.path.dirname(os.path.dirname(current_path))
 sys.path.append(base_path)
 
 
@@ -27,7 +29,6 @@ import random
 #read the csv file of the NIH dataset. Needed to define the NIH dataframe
 path_to_csv = os.path.join(base_path, "dataset/d_nih_aug.csv")
 d_nih_aug_csv = pd.read_csv(path_to_csv)
-
 
 #read the indices of the train, validation and test set from the files
 train_indices_file_nih = os.path.join(base_path, 'datasets_indices/train_indices_nih.txt')
