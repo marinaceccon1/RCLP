@@ -48,7 +48,7 @@ To run our code, the download of the NIH and CXP datasets is necessary. The data
 
 The folder "models" is empty; however, when running the script of each method, the models resulting from training on each task are saved in this folder in the form 'models/{method}_{taskID}_{epoch}.pth'.
 
-The folder "indices" is empty as well. After running the code, it will contain .txt files with the sample indices relative to each task.
+The folder "indices" contains examples of indices text files, needed to execute each method. When running the Create_scenarios.py, they get overwritten.
 
 In the src folder, a script for each method is present. To execute each method, the first thing that needs to be done is run "python Create_scenarios.py". This code creates the division of the NIH and CXP datasets in tasks and saves the indices of the samples in each task in .txt files in the folder "indices". At this point, any method can be executed by running "python {method}.py". The code reads the indices from the corresponding .txt file and creates the task stream, then computes the corresponding strategy.
 
