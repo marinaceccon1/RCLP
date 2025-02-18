@@ -1,9 +1,8 @@
-#Import the necessary libraries
-
 import sys
 import os
-current_path = os.path.abspath(__file__)
-base_path = os.path.dirname(os.path.dirname(current_path))
+
+current_path = os.getcwd()
+base_path = os.path.dirname(current_path)
 sys.path.append(base_path)
 
 import torch
@@ -85,7 +84,7 @@ tasks_labels = [[3,17,18],[3,17,18],[0,7,9,12,16],[1,2,4,5],[1,2,4,5],[6,8,10,11
 #train_indices_tasks is a list of lists. The i-th list contains the indices of the images in the train_dataset where
 #at least one of the pathologies of tasks_labels[i] appears.
 
-file_path = os.path.join(base_path,"indices/NewScenario/train_indices_tasks.txt")
+file_path = os.path.join(base_path,"indices/train_indices_tasks.txt")
 
 # Initialize train_indices_tasks as an empty list
 train_indices_tasks = []
@@ -99,7 +98,7 @@ with open(file_path, "r") as f:
         # Convert indices from strings to integers and append them to train_indices_tasks
         train_indices_tasks.append([int(index) for index in indices])
 
-file_path = os.path.join(base_path,"indices/NewScenario/val_indices_tasks.txt")
+file_path = os.path.join(base_path,"indices/val_indices_tasks.txt")
 
 # Initialize train_indices_tasks as an empty list
 val_indices_tasks = []
@@ -113,7 +112,7 @@ with open(file_path, "r") as f:
         # Convert indices from strings to integers and append them to train_indices_tasks
         val_indices_tasks.append([int(index) for index in indices])
 
-file_path = os.path.join(base_path,"indices/NewScenario/test_indices_tasks.txt")
+file_path = os.path.join(base_path,"indices/test_indices_tasks.txt")
 
 # Initialize train_indices_tasks as an empty list
 test_indices_tasks = []
@@ -249,7 +248,7 @@ for i in range(len(train_dataloaders)):
     #re-initialize the parameters
     optimizer.param_groups[0]['lr'] = 0.0005 
     #save the model in memory
-    torch.save(model.state_dict(), os.path.join(base_path,'/models/model_naive_task{0}_epoch{1}.pth'.format(i,10)))
+    torch.save(model.state_dict(), os.path.join(base_path,'models/model_naive_task{0}_epoch{1}.pth'.format(i,10)))
 
 model.eval()
 
@@ -261,7 +260,7 @@ num_classes = 19
 #compute AUC and F1 score
 for p in range(len(test_datasets_joint)):
     print("\nTESTING MODEL TRAINED ON TASK", p)
-    state_dict = torch.load(os.path.join(base_path,'/models/model_Naive_task{0}_epoch{1}.pth'.format(p,10)))
+    state_dict = torch.load(os.path.join(base_path,'models/model_naive_task{0}_epoch{1}.pth'.format(p,10)))
     model.load_state_dict(state_dict)
     
     compute_auc_and_f1(p, test_datasets_joint, test_dataloaders_joint, device, model, val_datasets_joint, 

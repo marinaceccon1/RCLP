@@ -1,10 +1,8 @@
-
-#Import the necessary libraries
-
 import sys
 import os
-current_path = os.path.abspath(__file__)
-base_path = os.path.dirname(os.path.dirname(current_path))
+
+current_path = os.getcwd()
+base_path = os.path.dirname(current_path)
 sys.path.append(base_path)
 
 import torch
@@ -13,6 +11,7 @@ import torch.optim as optim
 from torchvision import transforms
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
+import pandas as pd
 from src.data.utils import import_nih_dfs
 from src.data.utils import import_cxp_dfs
 from src.data.utils import create_datasets
@@ -89,7 +88,7 @@ tasks_labels = [[3,17,18],[3,17,18],[0,7,9,12,16],[1,2,4,5],[1,2,4,5],[6,8,10,11
 #train_indices_tasks is a list of lists. The i-th list contains the indices of the images in the train_dataset where
 #at least one of the pathologies of tasks_labels[i] appears.
 
-file_path = os.path.join(base_path,"indices/NewScenario/train_indices_tasks.txt")
+file_path = os.path.join(base_path,"indices/train_indices_tasks.txt")
 
 # Initialize train_indices_tasks as an empty list
 train_indices_tasks = []
@@ -104,7 +103,7 @@ with open(file_path, "r") as f:
         train_indices_tasks.append([int(index) for index in indices])
 
 # Define the file path
-file_path = os.path.join(base_path,"indices/NewScenario/val_indices_tasks.txt")
+file_path = os.path.join(base_path,"indices/val_indices_tasks.txt")
 
 # Initialize train_indices_tasks as an empty list
 val_indices_tasks = []
@@ -119,7 +118,7 @@ with open(file_path, "r") as f:
         val_indices_tasks.append([int(index) for index in indices])
 
 # Define the file path
-file_path = os.path.join(base_path,"indices/NewScenario/test_indices_tasks.txt")
+file_path = os.path.join(base_path,"indices/test_indices_tasks.txt")
 
 # Initialize train_indices_tasks as an empty list
 test_indices_tasks = []
@@ -223,7 +222,7 @@ for epoch in range(num_epochs):
     # Set model to training mode
     model.train()
     
-    train_model_joint(train_dataloader_joint, device, model, path_list_train, optimizer, criterion, reference_vectors, epoch)
+    #train_model_joint(train_dataloader_joint, device, model, path_list_train, optimizer, criterion, reference_vectors, epoch)
     #after every epoch, evaluate the model on the validation set
     model.eval()
     val_loss = eval_model_joint(val_dataloader_joint, device, model, reference_vectors, path_list_val, criterion)

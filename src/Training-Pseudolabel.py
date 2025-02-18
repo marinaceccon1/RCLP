@@ -10,17 +10,16 @@ import torch.nn as nn
 import torch.optim as optim
 from torchvision import transforms
 from torch.utils.data import DataLoader
+import matplotlib.pyplot as plt
 from src.data.utils import import_nih_dfs
 from src.data.utils import import_cxp_dfs
 from src.data.utils import create_datasets
 from src.data.utils import create_datasets_joint_cxp
 from src.data.utils import create_datasets_joint_nih
 from src.data.utils import create_dataloaders
-from src.data.utils import create_buffer
-from src.data.utils import modify_dataset_labels
-from src.training.utils import train_model_replay
-from src.eval.utils import eval_model
+from src.training.utils import train_model_pseudolabel
 from src.eval.utils import compute_auc_and_f1
+from src.eval.utils import eval_model
 
 #define the gpu device used to attach the tensors
 device = torch.device('cuda:2')
@@ -187,9 +186,64 @@ test_dataloaders_joint = [test_dataloader_joint_cxp,test_dataloader_joint_nih,te
 val_dataloaders_joint = [val_dataloader_joint_cxp,val_dataloader_joint_nih,val_dataloader_joint_cxp,
                           val_dataloader_joint_cxp,val_dataloader_joint_nih,val_dataloader_joint_nih,
                           val_dataloader_joint_nih]
+#indices of the tasks in tasks_labels associated to CXP
+tasks_labels_cxp = [0,2,3]
+#indices of the tasks in tasks_labels associated to NIH
+tasks_labels_nih = [1,4,5,6]
 
-#we create the replay buffers
-new_replayed_datasets = create_buffer(train_datasets, tasks_labels)
+#starting from the dataframes and the transforms, and given the indices in train_indices_tasks, val_indices_tasks,
+#test_indices_tasks, define the 7 training datasets, the 7 validation dataset and the 7 test_datasets
+train_datasets, val_datasets, test_datasets = create_datasets(dfs_cxp, dfs_nih, train_indices_tasks, val_indices_tasks,
+                                                              test_indices_tasks, tasks_labels_cxp, tasks_labels_nih, 
+                                                              path_image_cxp, train_transform_cxp, val_transform_cxp,
+                                                              test_transform_cxp, path_image_nih, train_transform_nih,
+                                                              val_transform_nih, test_transform_nih)
+
+#compute the dataloaders starting from the datasets
+train_dataloaders, val_dataloaders, test_dataloaders = create_dataloaders(train_datasets, val_datasets, test_datasets,
+                                                                         tasks_labels_cxp, tasks_labels_nih)
+
+#compute the joint datasets, hence the union of train_datasets, the union of val_datasets and the union of 
+#test_datasets, considering only the tasks associated to CXP
+train_dataset_joint_cxp, val_dataset_joint_cxp, test_dataset_joint_cxp, path_list_train, path_list_val = create_datasets_joint_cxp(train_indices_tasks, 
+                                                                        val_indices_tasks, test_indices_tasks, train_df_cxp, 
+                                                                        val_df_cxp, test_df_cxp, path_image_cxp, train_transform_cxp,
+                                                                        val_transform_cxp, test_transform_cxp, tasks_labels_cxp)
+
+#compute the joint datasets, hence the union of train_datasets, the union of val_datasets and the union of 
+#test_datasets, considering only the tasks associated to NIH
+train_dataset_joint_nih, val_dataset_joint_nih, test_dataset_joint_nih = create_datasets_joint_nih(train_indices_tasks, 
+                                                                        val_indices_tasks, test_indices_tasks, train_df_nih, 
+                                                                        val_df_nih, test_df_nih, path_image_nih, train_transform_nih,
+                                                                        val_transform_nih, test_transform_nih, tasks_labels_nih)
+
+#Put the joint datasets in a list so that in the components of tasks_labels_cxp we have the cxp datasets (and viceversa)
+# These datasets are used to test the model on previous tasks
+val_datasets_joint = [val_dataset_joint_cxp,val_dataset_joint_nih,val_dataset_joint_cxp,val_dataset_joint_cxp,
+                      val_dataset_joint_nih,val_dataset_joint_nih,val_dataset_joint_nih]
+
+test_datasets_joint = [test_dataset_joint_cxp,test_dataset_joint_nih,test_dataset_joint_cxp,test_dataset_joint_cxp,
+                      test_dataset_joint_nih,test_dataset_joint_nih,test_dataset_joint_nih]
+
+#compute the associated dataloaders
+val_dataloader_joint_cxp = DataLoader(val_dataset_joint_cxp, batch_size=48, shuffle=True, num_workers = 12, 
+                                      pin_memory = True)
+test_dataloader_joint_cxp = DataLoader(test_dataset_joint_cxp, batch_size=48, shuffle=True, num_workers = 12, 
+                                      pin_memory = True)
+
+val_dataloader_joint_nih = DataLoader(val_dataset_joint_nih, batch_size=32, shuffle=True, num_workers = 12, 
+                                      pin_memory = True)
+test_dataloader_joint_nih = DataLoader(test_dataset_joint_nih, batch_size=32, shuffle=True, num_workers = 12, 
+                                      pin_memory = True)
+
+#Put the joint datasets in a list so that in the components of tasks_labels_cxp we have the cxp datasets (and viceversa)
+test_dataloaders_joint = [test_dataloader_joint_cxp,test_dataloader_joint_nih,test_dataloader_joint_cxp,
+                          test_dataloader_joint_cxp,test_dataloader_joint_nih,test_dataloader_joint_nih,
+                          test_dataloader_joint_nih]
+
+val_dataloaders_joint = [val_dataloader_joint_cxp,val_dataloader_joint_nih,val_dataloader_joint_cxp,
+                          val_dataloader_joint_cxp,val_dataloader_joint_nih,val_dataloader_joint_nih,
+                          val_dataloader_joint_nih]
 
 #Model: a 121-layer DenseNet with pre-trained weights from ImageNet
 model = torch.hub.load('pytorch/vision:v0.10.0', 'densenet121', pretrained=True)
@@ -207,34 +261,58 @@ optimizer = optim.Adam(model.parameters(), lr=0.0005)
 
 model.to(device)
 
-for p in range(len(train_dataloaders)):
-    num_epochs = 10
-    # Training loop
-    
-    for epoch in range(num_epochs):
-        model.train()
-        #train the model for one epoch
-        train_model_replay(train_dataloaders, device, model, optimizer, criterion, tasks_labels, epoch, p, 
-                           tasks_labels_nih, tasks_labels_cxp, new_replayed_datasets)
+#we define new_model, which represents the teacher model
 
-        #compute the validation loss
-        model.eval()
-        val_loss = eval_model(val_dataloaders, p, device, model, criterion, tasks_labels)
-        
-        optimizer.param_groups[0]['lr'] = 0.0005
-    #save the model in memory
-    torch.save(model.state_dict(), os.path.join(base_path,'models/model_replay_task{0}_epoch{1}.pth'.format(p,10)))
+#Model: a 121-layer DenseNet with pre-trained weights from ImageNet
+new_model = torch.hub.load('pytorch/vision:v0.10.0', 'densenet121', pretrained=True)
 
-num_classes = 19
+# we go from a classification of 1014 classes to classification of 19 classes
+new_model.classifier = nn.Sequential(
+    nn.Linear(1024, 19),
+    #The output of the network is an array of 19 numbers between 0 and 1 indicating the probability of each disease label
+    nn.Sigmoid()
+)
+
+new_model.to(device)
 
 best_thresholds = {}
 
+num_classes = 19
+
+for i in range(len(train_dataloaders)):
+    num_epochs = 10
+
+    for epoch in range(num_epochs):
+        model.train()
+        #Train the model for one epoch
+        train_model_pseudolabel(train_dataloaders, device, new_model, tasks_labels, i, model, criterion, optimizer,
+                                epoch, best_thresholds)
+
+        model.eval()
+        #compute the validation loss
+        val_loss = eval_model(val_dataloaders, i, device, model, criterion, tasks_labels)
+        
+    #evaluate the model in order to update best_thresholds
+    compute_auc_and_f1(i, test_datasets_joint, test_dataloaders_joint, device, model, val_datasets_joint, 
+               val_dataloaders_joint, num_classes, tasks_labels, best_thresholds)
+
+    #save the model in memory
+    torch.save(model.state_dict(), os.path.join(base_path,'models/model_pseudolabels_task{0}_epoch{1}.pth'.format(i,10)))
+    state_dict = torch.load(os.path.join(base_path,'models/model_pseudolabels_task{0}_epoch{1}.pth'.format(i,10)))
+    #update the teacher
+    new_model.load_state_dict(state_dict)
+    new_model.eval()
+
 model.eval()
 
+best_thresholds = {}
+
+#evaluate each model (trained on each task) on all tasks up to the tasks it was trained on
+#compute AUC and F1 score
 for p in range(len(test_datasets_joint)):
     print("\nTESTING MODEL TRAINED ON TASK", p)
-    state_dict = torch.load(os.path.join(base_path,'models/model_replay_task{0}_epoch{1}.pth'.format(p,10)))
+    state_dict = torch.load(os.path.join(base_path,'models/model_pseudolabels_task{0}_epoch{1}.pth'.format(p,10)))
     model.load_state_dict(state_dict)
 
     compute_auc_and_f1(p, test_datasets_joint, test_dataloaders_joint, device, model, val_datasets_joint, 
-                   val_dataloaders_joint, num_classes, tasks_labels, best_thresholds)
+               val_dataloaders_joint, num_classes, tasks_labels, best_thresholds)

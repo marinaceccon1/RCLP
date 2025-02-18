@@ -16,9 +16,7 @@ from src.data.utils import create_datasets
 from src.data.utils import create_datasets_joint_cxp
 from src.data.utils import create_datasets_joint_nih
 from src.data.utils import create_dataloaders
-from src.data.utils import create_buffer
-from src.data.utils import modify_dataset_labels
-from src.training.utils import train_model_replay
+from src.training.utils import train_model_rclp
 from src.eval.utils import eval_model
 from src.eval.utils import compute_auc_and_f1
 
@@ -58,7 +56,6 @@ dfs_cxp = [train_df_cxp, val_df_cxp, test_df_cxp]
 #path of the dataset
 path_image_cxp = os.path.join(base_path,"dataset/chexpertchestxrays-u20210408")
 
-#define the transforms associated to the CXP dataset
 normalize_cxp = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
 train_transform_cxp = transforms.Compose([transforms.RandomHorizontalFlip(),
@@ -188,9 +185,7 @@ val_dataloaders_joint = [val_dataloader_joint_cxp,val_dataloader_joint_nih,val_d
                           val_dataloader_joint_cxp,val_dataloader_joint_nih,val_dataloader_joint_nih,
                           val_dataloader_joint_nih]
 
-#we create the replay buffers
-new_replayed_datasets = create_buffer(train_datasets, tasks_labels)
-
+#we define the model
 #Model: a 121-layer DenseNet with pre-trained weights from ImageNet
 model = torch.hub.load('pytorch/vision:v0.10.0', 'densenet121', pretrained=True)
 
@@ -207,34 +202,60 @@ optimizer = optim.Adam(model.parameters(), lr=0.0005)
 
 model.to(device)
 
-for p in range(len(train_dataloaders)):
-    num_epochs = 10
-    # Training loop
-    
-    for epoch in range(num_epochs):
-        model.train()
-        #train the model for one epoch
-        train_model_replay(train_dataloaders, device, model, optimizer, criterion, tasks_labels, epoch, p, 
-                           tasks_labels_nih, tasks_labels_cxp, new_replayed_datasets)
+#we define old_model, which is the teacher model
 
-        #compute the validation loss
-        model.eval()
-        val_loss = eval_model(val_dataloaders, p, device, model, criterion, tasks_labels)
-        
-        optimizer.param_groups[0]['lr'] = 0.0005
-    #save the model in memory
-    torch.save(model.state_dict(), os.path.join(base_path,'models/model_replay_task{0}_epoch{1}.pth'.format(p,10)))
+#Model: a 121-layer DenseNet with pre-trained weights from ImageNet
+old_model = torch.hub.load('pytorch/vision:v0.10.0', 'densenet121', pretrained=True)
+
+# we go from a classification of 1014 classes to classification of 19 classes
+old_model.classifier = nn.Sequential(
+    nn.Linear(1024, 19),
+    #The output of the network is an array of 19 numbers between 0 and 1 indicating the probability of each disease label
+    nn.Sigmoid()
+)
+
+old_model.to(device)
+
+old_model.eval()
+
+total_length = sum(len(train_dataset) for train_dataset in train_datasets)
+subset_size = int(total_length * 3 / 100)
+replayed_datasets = [[]]
 
 num_classes = 19
 
 best_thresholds = {}
 
+total_length = sum(len(train_dataset) for train_dataset in train_datasets)
+subset_size = int(total_length * 3 / 100)
+replayed_datasets = [[]]
+
+num_classes = 19
+
+best_thresholds = {}
+
+for i in range(len(train_dataloaders)):
+
+    num_epochs = 10
+
+    # Training loop
+    for epoch in range(num_epochs):
+        model.train()
+        old_model.eval()
+        num_epochs = 1
+        #train the model for one epoch
+        train_model_rclp(train_dataloaders, tasks_labels, i, model, old_model, device, criterion, optimizer, epoch, replayed_datasets, tasks_labels_nih, best_thresholds, val_dataloaders,
+                    subset_size, train_datasets, val_datasets, base_path,  num_classes, num_epochs, val_datasets_joint, val_dataloaders_joint)
+
+
 model.eval()
+
+best_thresholds = {}
 
 for p in range(len(test_datasets_joint)):
     print("\nTESTING MODEL TRAINED ON TASK", p)
-    state_dict = torch.load(os.path.join(base_path,'models/model_replay_task{0}_epoch{1}.pth'.format(p,10)))
+    state_dict = torch.load(os.path.join(base_path,'models/RCLP_gamma1_block12_task{0}_epoch{1}'.format(p,10)))
     model.load_state_dict(state_dict)
-
+    
     compute_auc_and_f1(p, test_datasets_joint, test_dataloaders_joint, device, model, val_datasets_joint, 
                    val_dataloaders_joint, num_classes, tasks_labels, best_thresholds)

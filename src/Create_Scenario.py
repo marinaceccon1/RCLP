@@ -1,9 +1,23 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
 import sys
 import os
 
-current_path = os.path.abspath(__file__)
-base_path = os.path.dirname(os.path.dirname(current_path))
+
+# In[2]:
+
+
+current_path = os.getcwd()
+base_path = os.path.dirname(current_path)
 sys.path.append(base_path)
+
+
+# In[4]:
+
 
 import numpy as np
 from src.data.utils import save_indices_to_txt
@@ -11,16 +25,31 @@ from src.data.utils import prioritize_frontal
 import pandas as pd
 import random
 
+
+# In[5]:
+
+
 #read the csv file of the NIH dataset. Needed to define the NIH dataframe
 path_to_csv = os.path.join(base_path, "dataset/d_nih_aug.csv")
 d_nih_aug_csv = pd.read_csv(path_to_csv)
 
 
+# In[6]:
+
+
 # create a list of indices for all patients in d_nih
 all_indices = list(range(np.max(d_nih_aug_csv["Patient ID"])))
 
+
+# In[7]:
+
+
 # shuffle the list of indices
 random.shuffle(all_indices)
+
+
+# In[8]:
+
 
 # calculate the number of images in each dataset
 num_train = int(np.max(d_nih_aug_csv["Patient ID"]) * 0.8)
@@ -40,6 +69,10 @@ assert len(val_patient_indices_nih) == num_val
 assert len(test_patient_indices_nih) == num_test
 assert len(train_patient_indices_nih) + len(val_patient_indices_nih) + len(test_patient_indices_nih) == np.max(d_nih_aug_csv["Patient ID"])
 
+
+# In[9]:
+
+
 #convert the lists into sets to verify that the sets have no element in common
 train_set_nih = set(train_patient_indices_nih)
 val_set_nih = set(val_patient_indices_nih)
@@ -51,6 +84,10 @@ if len(train_set_nih.intersection(test_set_nih)) > 0:
     print("train and test sets have common indices")
 if len(val_set_nih.intersection(test_set_nih)) > 0:
     print("val and test sets have common indices")
+
+
+# In[10]:
+
 
 #train_indices is the list of indices of images in the training set, it contains the indices of all images whose patient index
 #is in train_patient_indices
@@ -66,6 +103,10 @@ for i in d_nih_aug_csv["Patient ID"]:
     train_indices_nih[i] = []
     val_indices_nih[i] = []
     test_indices_nih[i] = []
+
+
+# In[11]:
+
 
 for i in range(len(d_nih_aug_csv)):
     if d_nih_aug_csv["Patient ID"][i] in train_patient_indices_nih:
@@ -93,6 +134,10 @@ for i in test_indices_nih.keys():
             if d_nih_aug_csv["Finding Labels"][idx] == "No Finding":
                 test_indices_nih[i].remove(idx)
 
+
+# In[12]:
+
+
 train_indices_list_nih = []
 
 for i in train_indices_nih.keys():
@@ -114,6 +159,10 @@ for i in test_indices_nih.keys():
         random_number = random.randint(0, len(test_indices_nih[i])-1)
         test_indices_list_nih.append(test_indices_nih[i][random_number])
 
+
+# In[13]:
+
+
 train_indices_file_nih = '/home/marina/NewContinual/indices/train_nih.txt'
 val_indices_file_nih = '/home/marina/NewContinual/indices/val_nih.txt'
 test_indices_file_nih = '/home/marina/NewContinual/indices/test_nih.txt'
@@ -122,15 +171,28 @@ save_indices_to_txt(train_indices_list_nih, train_indices_file_nih)
 save_indices_to_txt(val_indices_list_nih, val_indices_file_nih)
 save_indices_to_txt(test_indices_list_nih, test_indices_file_nih)
 
+
+# In[14]:
+
+
 #define the dtaframes relative to the train, validation and test set
 train_df_nih = d_nih_aug_csv[d_nih_aug_csv.index.isin(train_indices_list_nih)].reset_index(drop=True)
 val_df_nih = d_nih_aug_csv[d_nih_aug_csv["index"].isin(val_indices_list_nih)].reset_index(drop=True)
 test_df_nih = d_nih_aug_csv[d_nih_aug_csv["index"].isin(test_indices_list_nih)].reset_index(drop=True)
 
-#IF "train_cxp.txt", "val_cxp.txt" and "test_cxp.txt" ALREADY EXIST, DON'T NEED TO RUN THIS CODE, CAN SKIP TO LINE 233
+
+# In[15]:
+
+
+new_base_path = os.path.dirname(os.path.dirname(current_path))
+
 #define the paths where the train and validation csv files can be found
-cxp_csv_train_file = os.path.join(base_path,"dataset/chexpertchestxrays-u20210408/train.csv")
-cxp_csv_val_file = os.path.join(base_path,"dataset/chexpertchestxrays-u20210408/valid.csv")
+cxp_csv_train_file = "/mnt/disk1/chexpertchestxrays-u20210408/train.csv"
+cxp_csv_val_file = "/mnt/disk1/chexpertchestxrays-u20210408/valid.csv"
+
+
+# In[16]:
+
 
 cxp_train_csv = pd.read_csv(cxp_csv_train_file)
 cxp_val_csv = pd.read_csv(cxp_csv_val_file)
@@ -143,6 +205,10 @@ cxp_val_csv['patient_id'] = cxp_val_csv['Path'].apply(lambda x: x.split('/')[2])
 # Consider only the indices such that the path contains the word "frontal"
 frontal_patient_indices_train = cxp_train_csv.groupby('patient_id', group_keys=False).apply(prioritize_frontal)
 frontal_patient_indices_val = cxp_val_csv.groupby('patient_id', group_keys=False).apply(prioritize_frontal)
+
+
+# In[17]:
+
 
 #Create a list out of all the indices
 frontal_patient_indices_train = [item for sublist in frontal_patient_indices_train for item in sublist]
@@ -163,6 +229,10 @@ unique_patient_indices_val = unique_patients_df_val.index.tolist()
 cxp_train_df =frontal_df_train.loc[unique_patient_indices_train]
 cxp_val_df =frontal_df_val.loc[unique_patient_indices_val]
 
+
+# In[18]:
+
+
 #change the paths so that they correspond to the actual location of the dataset
 new_prefix = "train"
 cxp_train_df['Path'] = cxp_train_df['Path'].str.replace('^CheXpert-v1\.0/train', new_prefix, regex=True)
@@ -175,9 +245,6 @@ cxp_train_df.rename(columns={'Pleural Effusion': 'Effusion'}, inplace=True)
 # Concatenate vertically
 cxp_df = pd.concat([cxp_train_df, cxp_val_df], axis=0).reset_index(drop = True)
 
-train_df_cxp = cxp_df[cxp_df.index.isin(train_patient_indices_cxp)].reset_index(drop=True)
-val_df_cxp = cxp_df[cxp_df.index.isin(val_patient_indices_cxp)].reset_index(drop=True)
-test_df_cxp = cxp_df[cxp_df.index.isin(test_patient_indices_cxp)].reset_index(drop=True)
 # create a list of indices for all patients in d_nih
 all_indices_cxp = list(range(len(cxp_df)))
 
@@ -202,13 +269,27 @@ assert len(val_patient_indices_cxp) == num_val_cxp
 assert len(test_patient_indices_cxp) == num_test_cxp
 assert len(train_patient_indices_cxp) + len(val_patient_indices_cxp) + len(test_patient_indices_cxp) == len(cxp_df)
 
-train_indices_file_cxp = os.path.join(base_path, '/indices/train_cxp.txt')
-val_indices_file_cxp = os.path.join(base_path, '/indices/val_cxp.txt')
-test_indices_file_cxp = os.path.join(base_path, '/indices/test_cxp.txt')
+train_df_cxp = cxp_df[cxp_df.index.isin(train_patient_indices_cxp)].reset_index(drop=True)
+val_df_cxp = cxp_df[cxp_df.index.isin(val_patient_indices_cxp)].reset_index(drop=True)
+test_df_cxp = cxp_df[cxp_df.index.isin(test_patient_indices_cxp)].reset_index(drop=True)
+# create a list of indices for all patients in d_nih
+all_indices_cxp = list(range(len(cxp_df)))
+
+
+# In[22]:
+
+
+train_indices_file_cxp = os.path.join(base_path, 'indices/train_cxp.txt')
+val_indices_file_cxp = os.path.join(base_path, 'indices/val_cxp.txt')
+test_indices_file_cxp = os.path.join(base_path, 'indices/test_cxp.txt')
 
 save_indices_to_txt(train_patient_indices_cxp, train_indices_file_cxp)
 save_indices_to_txt(val_patient_indices_cxp, val_indices_file_cxp)
 save_indices_to_txt(test_patient_indices_cxp, test_indices_file_cxp)
+
+
+# In[23]:
+
 
 pathologies = ['Lung Opacity',
               'Atelectasis',
@@ -249,6 +330,10 @@ tasks_labels = [[3,17,18],[3,17,18],[0,7,9,12,16],[1,2,4,5],[1,2,4,5],[6,8,10,11
 train_indices_tasks= [[],[],[],[],[],[],[]]
 val_indices_tasks= [[],[],[],[],[],[],[]]
 test_indices_tasks= [[],[],[],[],[],[],[]]
+
+
+# In[24]:
+
 
 #indices of the tasks in tasks_labels associated to CXP
 tasks_labels_cxp = [0,2,3]
@@ -302,6 +387,10 @@ for i in range(len(test_df_nih)):
                 if reference_vector_nih[j] in tasks_labels[k] and i not in test_indices_tasks[k]:
                     test_indices_tasks[k].append(i)
 
+
+# In[25]:
+
+
 # Define the file path
 file_path = os.path.join(base_path, "indices/train_indices_tasks.txt")
 
@@ -331,3 +420,10 @@ with open(file_path, "w") as f:
     for sublist in test_indices_tasks:
         # Convert the sublist to a string and write it to the file
         f.write(" ".join(map(str, sublist)) + "\n")
+
+
+# In[ ]:
+
+
+
+

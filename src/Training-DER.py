@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torchvision import transforms
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from src.data.utils import import_nih_dfs
 from src.data.utils import import_cxp_dfs
 from src.data.utils import create_datasets
@@ -17,8 +17,8 @@ from src.data.utils import create_datasets_joint_cxp
 from src.data.utils import create_datasets_joint_nih
 from src.data.utils import create_dataloaders
 from src.data.utils import create_buffer
-from src.data.utils import modify_dataset_labels
-from src.training.utils import train_model_replay
+from src.data.utils import filter_target
+from src.training.utils import train_model_DER
 from src.eval.utils import eval_model
 from src.eval.utils import compute_auc_and_f1
 
@@ -206,6 +206,7 @@ criterion = torch.nn.BCELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.0005)
 
 model.to(device)
+old_targets = {}
 
 for p in range(len(train_dataloaders)):
     num_epochs = 10
@@ -214,8 +215,8 @@ for p in range(len(train_dataloaders)):
     for epoch in range(num_epochs):
         model.train()
         #train the model for one epoch
-        train_model_replay(train_dataloaders, device, model, optimizer, criterion, tasks_labels, epoch, p, 
-                           tasks_labels_nih, tasks_labels_cxp, new_replayed_datasets)
+        train_model_DER(train_dataloaders, device, model, optimizer, criterion, tasks_labels, epoch, p, 
+                           tasks_labels_nih, tasks_labels_cxp, new_replayed_datasets, old_targets, num_epochs)
 
         #compute the validation loss
         model.eval()
@@ -223,7 +224,17 @@ for p in range(len(train_dataloaders)):
         
         optimizer.param_groups[0]['lr'] = 0.0005
     #save the model in memory
-    torch.save(model.state_dict(), os.path.join(base_path,'models/model_replay_task{0}_epoch{1}.pth'.format(p,10)))
+    torch.save(model.state_dict(), os.path.join(base_path,'models/model_DER_task{0}_epoch{1}.pth'.format(p,10)))
+    with torch.no_grad():
+        if p < len(new_replayed_datasets):
+            replay_dataloader = DataLoader(new_replayed_datasets[p], batch_size=32, shuffle=True, num_workers=12, pin_memory=True) 
+            for m,data in enumerate(replay_dataloader):
+                img = data[0].to(device)
+                idx_batch = data[2]
+                output_batch = model(img).to(device)
+                for j in range(len(idx_batch)):
+                    if idx_batch[j] not in old_targets.keys():
+                        old_targets[idx_batch[j]] = output_batch[j]
 
 num_classes = 19
 
@@ -233,7 +244,7 @@ model.eval()
 
 for p in range(len(test_datasets_joint)):
     print("\nTESTING MODEL TRAINED ON TASK", p)
-    state_dict = torch.load(os.path.join(base_path,'models/model_replay_task{0}_epoch{1}.pth'.format(p,10)))
+    state_dict = torch.load(os.path.join(base_path,'models/model_DER_task{0}_epoch{1}.pth'.format(p,10)))
     model.load_state_dict(state_dict)
 
     compute_auc_and_f1(p, test_datasets_joint, test_dataloaders_joint, device, model, val_datasets_joint, 
