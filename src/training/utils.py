@@ -1,7 +1,9 @@
 from src.data.utils import filter_single_target
 from src.data.utils import filter_target
+from src.data.utils import MergedDataset
 from torch.utils.data import Subset, DataLoader
 import torch
+import torch.nn as nn
 import time
 import random
 from sklearn.metrics import roc_auc_score
@@ -37,14 +39,13 @@ def extract_features(feature_extractor, images):
     return torch.cat(features, dim=0)
 
 def train_model_DER(train_dataloaders, device, model, optimizer, criterion, tasks_labels, epoch, p, 
-                    tasks_labels_nih, tasks_labels_cxp, new_replayed_datasets, old_targets):
-   num_epochs = 10
+                    tasks_labels_nih, tasks_labels_cxp, new_replayed_datasets, old_targets, num_epochs):
 
     running_loss = 0.0
     start_time = time.time()
 
     task_labels = []
-    for sublist in tasks_labels[:i+1]:
+    for sublist in tasks_labels[:p+1]:
         task_labels.extend(set(sublist))
 
     task_labels = list(set(task_labels))
@@ -52,19 +53,19 @@ def train_model_DER(train_dataloaders, device, model, optimizer, criterion, task
     for epoch in range(num_epochs):
         #for each batch from the dataloader
         model.train()
-        for m,data in enumerate(train_dataloaders[i]):
+        for m,data in enumerate(train_dataloaders[p]):
             #extract the batch sample
             img = data[0].to(device)
             target_batch = data[1].to(device)
             modified_target_batch = torch.zeros_like(target_batch).to(device)  # Ensure this tensor is on GPU
-            for k in tasks_labels[i]:
+            for k in tasks_labels[p]:
                 modified_target_batch[:, k] = target_batch[:, k]
 
-            if i > 0:
+            if p > 0:
                 batch_size = 48
-                if i in tasks_labels_nih:
+                if p in tasks_labels_nih:
                     batch_size = 32
-                replayed_dataset = new_replayed_datasets[i - 1]
+                replayed_dataset = new_replayed_datasets[p - 1]
                 replayed_indices = random.sample(range(len(replayed_dataset)), batch_size)
                 replayed_target_indices = [replayed_dataset[idx][2] for idx in replayed_indices]
                 replayed_targets = []
@@ -321,7 +322,7 @@ def train_model_replay(train_dataloaders, device, model, optimizer, criterion, t
         img = data[0].to(device)
         target_batch = data[1].to(device)
         modified_target_batch = torch.zeros_like(target_batch).to(device)  # Ensure this tensor is on GPU
-        for k in tasks_labels[i]:
+        for k in tasks_labels[p]:
             modified_target_batch[:, k] = target_batch[:, k]
 
         if p > 0:
@@ -442,7 +443,7 @@ def train_model_lwf_replay(train_dataloaders, tasks_labels, p, tasks_labels_nih,
         img = data[0].to(device)
         target_batch = data[1].to(device)
         modified_target_batch = torch.zeros_like(target_batch).to(device)  # Ensure this tensor is on GPU
-        for k in tasks_labels[i]:
+        for k in tasks_labels[p]:
             modified_target_batch[:, k] = target_batch[:, k]
 
         if p > 0:
@@ -499,8 +500,8 @@ def train_model_lwf_replay(train_dataloaders, tasks_labels, p, tasks_labels_nih,
             start_time = time.time()
             
 def train_model_rclp(train_dataloaders, tasks_labels, i, model, old_model, device, criterion, optimizer, epoch, replayed_datasets, tasks_labels_nih, best_thresholds, val_dataloaders,
-                    subset_size, train_datasets, val_datasets, val_dataloaders, tasks_labels, base_path,  num_classes):
-       task_labels = []
+                    subset_size, train_datasets, val_datasets, base_path,  num_classes, num_epochs, val_datasets_joint, val_dataloaders_joint):
+        task_labels = []
         for sublist in tasks_labels[:i+1]:
             task_labels.extend(set(sublist))
 
@@ -621,7 +622,7 @@ def train_model_rclp(train_dataloaders, tasks_labels, i, model, old_model, devic
                 val_loss /= (k + 1)
                 print("Validation loss: ", val_loss) #average on the number of batches
 
-        torch.save(model.state_dict(), state_dict = torch.load(os.path.join(base_path,'/models/RCLP_gamma1_block12_task{0}_epoch'.format(i,10)))
+        torch.save(model.state_dict(), os.path.join(base_path,'models/RCLP_gamma1_block12_task{0}_epoch{1}'.format(i,10)))
 
         j = i+1
         subset_datasets = []
@@ -739,7 +740,7 @@ def train_model_rclp(train_dataloaders, tasks_labels, i, model, old_model, devic
             print("Best F1 score thresholds: ", best_thresholds)
 
         #save the model in memory
-        state_dict = torch.load(os.path.join(base_path,'/models/RCLP_gamma1_block12_task{0}_epoch'.format(i,10)))
+        state_dict = torch.load(os.path.join(base_path,'models/RCLP_gamma1_block12_task{0}_epoch{1}'.format(i,10)))
         #update the teacher
         old_model.load_state_dict(state_dict)
         old_model.eval()
