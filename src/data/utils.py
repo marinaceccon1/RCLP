@@ -16,6 +16,11 @@ def read_indices_from_txt(file_path):
             indices.append(index)
     return indices
 
+def save_indices_to_txt(indices, file_path):
+    with open(file_path, 'w') as file:
+        for index in indices:
+            file.write(str(index) + '\n')
+
 # Define a function to prioritize "frontal" images
 def prioritize_frontal(group):
     frontal_indices = group[group['Path'].str.contains('frontal')].index.tolist()
@@ -60,9 +65,9 @@ def import_nih_dfs(base_path):
     d_nih_aug_csv = pd.read_csv(path_to_csv)
     
     #read the indices associated to the train, validtion and test set from the txt files
-    train_indices_file_nih = os.path.join(base_path, 'datasets_indices/train_indices_nih.txt')
-    val_indices_file_nih = os.path.join(base_path, 'datasets_indices/val_indices_nih.txt')
-    test_indices_file_nih = os.path.join(base_path, 'datasets_indices/test_indices_nih.txt')
+    train_indices_file_nih = os.path.join(base_path, 'indices/train_indices_nih.txt')
+    val_indices_file_nih = os.path.join(base_path, 'indices/val_indices_nih.txt')
+    test_indices_file_nih = os.path.join(base_path, 'indices/test_indices_nih.txt')
 
     train_indices_list_nih = read_indices_from_txt(train_indices_file_nih)
     val_indices_list_nih = read_indices_from_txt(val_indices_file_nih)
@@ -124,9 +129,9 @@ def import_cxp_dfs(base_path):
     cxp_df = pd.concat([cxp_train_df, cxp_val_df], axis=0).reset_index(drop = True)
     
     #Read the train, validation and test indices from the corresponding txt files
-    train_patient_indices_cxp = read_indices_from_txt(os.path.join(base_path,'datasets_indices/train_indices_cxp.txt'))
-    val_patient_indices_cxp = read_indices_from_txt(os.path.join(base_path,'datasets_indices/val_indices_cxp.txt'))
-    test_patient_indices_cxp = read_indices_from_txt(os.path.join(base_path,'datasets_indices/test_indices_cxp.txt'))
+    train_patient_indices_cxp = read_indices_from_txt(os.path.join(base_path,'indices/train_indices_cxp.txt'))
+    val_patient_indices_cxp = read_indices_from_txt(os.path.join(base_path,'indices/val_indices_cxp.txt'))
+    test_patient_indices_cxp = read_indices_from_txt(os.path.join(base_path,'indices/test_indices_cxp.txt'))
     
     train_df_cxp = cxp_df[cxp_df.index.isin(train_patient_indices_cxp)].reset_index(drop=True)
     val_df_cxp = cxp_df[cxp_df.index.isin(val_patient_indices_cxp)].reset_index(drop=True)
@@ -299,7 +304,7 @@ def modify_dataset_labels(dataset, task_labels, batch_size=32, num_workers=12, p
             modified_dataset.append((img, new_label, path))
     return modified_dataset
 
-def create_buffer(train_datasets):
+def create_buffer(train_datasets, tasks_labels):
     #Total size of the replay buffer (3% of the total size of the training stream)
     for i in range(len(tasks_labels)):
         modified_train_dataset = modify_dataset_labels(train_datasets[i], tasks_labels[i])
